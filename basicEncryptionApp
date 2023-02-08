@@ -1,0 +1,48 @@
+import hashlib
+import hmac
+import os
+
+# A function to hash a password using a salt and the SHA-256 algorithm
+def hash_password(password, salt=None):
+    if salt is None:
+        salt = os.urandom(16)
+    salted_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
+    return salt + salted_hash
+
+# A function to check if a password matches a hashed password
+def verify_password(password, hashed_password):
+    salt = hashed_password[:16]
+    return hashed_password == hash_password(password, salt)
+
+# A function to generate a token for authentication
+def generate_token(user_id, secret):
+    message = str(user_id).encode()
+    token = hmac.new(secret, message, hashlib.sha256)
+    return token.hexdigest()
+
+# A function to verify if a token is valid for a user
+def verify_token(user_id, token, secret):
+    expected_token = generate_token(user_id, secret)
+    return hmac.compare_digest(token.encode(), expected_token.encode())
+
+# An example use of the functions
+# Hash the password
+password = "secret_password"
+hashed_password = hash_password(password)
+print(hashed_password)
+
+# Verify the password
+password = "secret_password"
+verification = verify_password(password, hashed_password)
+print(verification) # True
+
+# Generate a token
+user_id = 123
+secret = b"secret_key"
+token = generate_token(user_id, secret)
+print(token)
+
+# Verify the token
+user_id = 123
+verification = verify_token(user_id, token, secret)
+print(verification) # True
